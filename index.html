@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C-like Language Analyzer - Step-by-Step</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column; 
+            align-items: center; 
+            margin: 0;
+            padding: 20px;
+            background-color: #e9eef2; 
+            color: #333;
+        }
+        .container {
+            width: 90%; 
+            max-width: 1200px; 
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 2.2em;
+        }
+        h2 {
+            color: #007bff;
+            margin-top: 30px; 
+            margin-bottom: 15px;
+            font-size: 1.6em;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        textarea {
+            width: calc(100% - 22px); 
+            height: 250px;
+            font-family: 'Fira Code', 'Cascadia Code', monospace; 
+            font-size: 14px;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #c0c0c0;
+            border-radius: 6px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+            resize: vertical;
+        }
+        button {
+            padding: 12px 25px;
+            background-color: #28a745; 
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 17px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            display: block; 
+            width: 100%;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .output-box {
+            background-color: #f8f9fa; 
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #d0d0d0;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            min-height: 80px; 
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .error {
+            color: #dc3545; 
+            font-weight: bold;
+            background-color: #ffebeb; 
+            border-color: #dc3545;
+        }
+        .info-message {
+            color: #007bff;
+            font-style: italic;
+            margin-top: -10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MiniLang Compiler</h1>
+
+        <div class="input-section">
+            <h2>Source Code Input</h2>
+            <textarea id="codeInput" placeholder="Enter your code here"></textarea>
+            <button onclick="analyzeCode()">Run Compiler Stages</button>
+        </div>
+
+        <div class="output-sections">
+            <h2>1. Lexical Analysis (Tokenization)</h2>
+            <h3>Raw Tokens</h3>
+            <pre id="tokensOutput" class="output-box"></pre>
+            <p class="info-message">The source code is broken down into a stream of tokens, each representing a meaningful unit (e.g., keyword, identifier, operator).</p>
+
+            <h2>2. Syntax Analysis (Parsing)</h2>
+            <h3>Syntax Errors</h3>
+            <pre id="syntaxErrorsOutput" class="output-box error"></pre>
+            <p class="info-message">Tokens are checked against the language's grammar rules to build a hierarchical structure. Any violations result in syntax errors.</p>
+
+            <h2>3. Semantic Analysis</h2>
+            <h3>Semantic Errors</h3>
+            <pre id="semanticErrorsOutput" class="output-box error"></pre>
+            <p class="info-message">The parsed structure is checked for meaning and consistency (e.g., type checking, variable declaration before use). Errors indicate logical inconsistencies.</p>
+
+            <h2>4. Intermediate Code Generation</h2>
+            <h3>Generated Intermediate Code</h3>
+            <pre id="intermediateCodeOutput" class="output-box"></pre>
+            <p class="info-message">The validated code is translated into a machine-independent intermediate representation, preparing it for optimization and machine code generation.</p>
+
+            </div>
+    </div>
+
+    <script>
+        async function analyzeCode() {
+            const code = document.getElementById('codeInput').value;
+            const tokensOutput = document.getElementById('tokensOutput');
+            const syntaxErrorsOutput = document.getElementById('syntaxErrorsOutput');
+            const semanticErrorsOutput = document.getElementById('semanticErrorsOutput');
+            const intermediateCodeOutput = document.getElementById('intermediateCodeOutput');
+            // Removed generalErrorOutput as its element is removed from HTML
+
+            // Clear previous outputs
+            tokensOutput.textContent = 'Processing Lexical Analysis...';
+            syntaxErrorsOutput.textContent = '';
+            semanticErrorsOutput.textContent = 'Awaiting Semantic Analysis...';
+            intermediateCodeOutput.textContent = 'Awaiting Intermediate Code Generation...';
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ code: code }),
+                });
+
+                const data = await response.json();
+
+                // Check if there's a top-level error from the server
+                if (data.error) {
+                    // Since generalErrorOutput is removed, you might want to log this to console
+                    // or display it in an alert, or in one of the existing error boxes.
+                    // For now, let's put it into the syntaxErrorsOutput if a general error occurs.
+                    console.error("Server-side error:", data.error);
+                    if (data.traceback) {
+                        console.error("Traceback:", data.traceback);
+                    }
+                    // Optionally, display this in syntaxErrorsOutput as a fallback
+                    syntaxErrorsOutput.textContent = `SERVER ERROR: ${data.error}\n(Check console for details)`;
+                    syntaxErrorsOutput.classList.add('error');
+
+                } else {
+                    displayResults(data);
+                }
+            } catch (error) {
+                // If there's a network error or JSON parsing error
+                console.error('Fetch error:', error);
+                syntaxErrorsOutput.textContent = `NETWORK ERROR: Failed to connect to the server. (${error.message})`;
+                syntaxErrorsOutput.classList.add('error');
+            }
+        }
+
+        function displayResults(data) {
+            // Lexical Analysis
+            const tokens = data.tokens || [];
+            document.getElementById('tokensOutput').textContent =
+                tokens.map(t => `${t.type}: ${t.value} (Line: ${t.line}, Col: ${t.column})`).join('\n') || 'No tokens generated or an error occurred during tokenization.';
+
+            // Syntax Analysis
+            const syntaxErrors = data.syntaxErrors || [];
+            document.getElementById('syntaxErrorsOutput').textContent =
+                syntaxErrors.length ? syntaxErrors.join('\n') : 'No syntax errors found.';
+            document.getElementById('syntaxErrorsOutput').classList.toggle('error', syntaxErrors.length > 0);
+
+
+            // Semantic Analysis
+            const semanticErrors = data.semanticErrors || [];
+            document.getElementById('semanticErrorsOutput').textContent =
+                semanticErrors.length ? semanticErrors.join('\n') : 'No semantic errors found.';
+            document.getElementById('semanticErrorsOutput').classList.toggle('error', semanticErrors.length > 0);
+
+            // Intermediate Code Generation
+            const intermediateCode = data.intermediateCode || [];
+            document.getElementById('intermediateCodeOutput').textContent =
+                intermediateCode.length ? intermediateCode.join('\n') : 'No intermediate code generated (possibly due to earlier errors).';
+        }
+
+        // Run analysis on page load with the default code
+        document.addEventListener('DOMContentLoaded', analyzeCode);
+    </script>
+</body>
+</html>
